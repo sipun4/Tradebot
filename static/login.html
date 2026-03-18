@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXUS TRADER — Access</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #070a0f;
+    color: #e2e8f0;
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,245,160,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,245,160,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: gridMove 20s linear infinite;
+    pointer-events: none;
+  }
+
+  @keyframes gridMove {
+    0%   { background-position: 0 0; }
+    100% { background-position: 40px 40px; }
+  }
+
+  /* Scanlines */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 2px,
+      rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px
+    );
+    pointer-events: none;
+  }
+
+  /* Glow orbs */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    opacity: 0.15;
+  }
+  .orb-1 { width: 500px; height: 500px; background: #00f5a0; top: -150px; left: -150px; }
+  .orb-2 { width: 400px; height: 400px; background: #00d4ff; bottom: -100px; right: -100px; }
+
+  /* Card */
+  .card {
+    position: relative;
+    z-index: 10;
+    width: 420px;
+    background: #0d1117;
+    border: 1px solid #1a2332;
+    border-radius: 20px;
+    padding: 48px 40px;
+    box-shadow: 0 0 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,245,160,0.05);
+    animation: cardIn 0.5s cubic-bezier(0.16,1,0.3,1);
+  }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(24px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* Animated top border */
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    border-radius: 20px 20px 0 0;
+    background: linear-gradient(90deg, transparent, #00f5a0, #00d4ff, transparent);
+    background-size: 200% 100%;
+    animation: shimmer 3s linear infinite;
+  }
+
+  @keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Logo */
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 36px;
+  }
+
+  .logo-icon {
+    width: 48px; height: 48px;
+    background: linear-gradient(135deg, #00f5a0, #00d4ff);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 0 24px rgba(0,245,160,0.25);
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: #00f5a0;
+    text-shadow: 0 0 20px rgba(0,245,160,0.3);
+  }
+
+  .logo-sub {
+    font-size: 10px;
+    color: #4a5568;
+    letter-spacing: 2px;
+    margin-top: 3px;
+  }
+
+  /* Title */
+  .title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #e2e8f0;
+    margin-bottom: 6px;
+    letter-spacing: -0.3px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: #4a5568;
+    margin-bottom: 32px;
+    line-height: 1.5;
+  }
+
+  /* Form */
+  .field {
+    margin-bottom: 20px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: #4a5568;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .input-wrap {
+    position: relative;
+  }
+
+  .input-wrap input {
+    width: 100%;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid #1a2332;
+    border-radius: 10px;
+    padding: 14px 48px 14px 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    color: #e2e8f0;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    letter-spacing: 2px;
+  }
+
+  .input-wrap input:focus {
+    border-color: rgba(0,245,160,0.4);
+    background: rgba(0,245,160,0.03);
+    box-shadow: 0 0 0 3px rgba(0,245,160,0.06);
+  }
+
+  .input-wrap input.error {
+    border-color: rgba(255,59,92,0.5);
+    background: rgba(255,59,92,0.03);
+    box-shadow: 0 0 0 3px rgba(255,59,92,0.06);
+  }
+
+  .toggle-eye {
+    position: absolute;
+    right: 14px; top: 50%;
+    transform: translateY(-50%);
+    background: none; border: none;
+    color: #4a5568; cursor: pointer;
+    font-size: 16px;
+    transition: color 0.2s;
+    padding: 4px;
+  }
+
+  .toggle-eye:hover { color: #00f5a0; }
+
+  /* Button */
+  .btn-login {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #00f5a0, #00d4ff);
+    border: none;
+    border-radius: 10px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #070a0f;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+
+  .btn-login:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 32px rgba(0,245,160,0.25);
+  }
+
+  .btn-login:active { transform: translateY(0); }
+
+  .btn-login:disabled {
+    opacity: 0.6; cursor: not-allowed; transform: none;
+  }
+
+  .btn-login .spinner {
+    display: none;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(7,10,15,0.3);
+    border-top-color: #070a0f;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    margin: 0 auto;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .btn-login.loading .btn-text { display: none; }
+  .btn-login.loading .spinner  { display: block; }
+
+  /* Error message */
+  .error-msg {
+    display: none;
+    background: rgba(255,59,92,0.08);
+    border: 1px solid rgba(255,59,92,0.2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #ff3b5c;
+    font-family: 'Space Mono', monospace;
+    margin-top: 14px;
+    text-align: center;
+    animation: shake 0.4s ease;
+  }
+
+  .error-msg.visible { display: block; }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60%  { transform: translateX(-6px); }
+    40%, 80%  { transform: translateX(6px); }
+  }
+
+  /* Footer */
+  .card-footer {
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid #1a2332;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 11px;
+    color: #4a5568;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .lock-icon {
+    font-size: 14px;
+  }
+
+  /* Success state */
+  .success-overlay {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 20px 0;
+  }
+
+  .success-overlay.visible { display: flex; }
+
+  .check-circle {
+    width: 64px; height: 64px;
+    background: linear-gradient(135deg, #00f5a0, #00d4ff);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    box-shadow: 0 0 40px rgba(0,245,160,0.3);
+    animation: popIn 0.4s cubic-bezier(0.16,1,0.3,1);
+  }
+
+  @keyframes popIn {
+    from { transform: scale(0.5); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+
+  .success-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    color: #00f5a0;
+    letter-spacing: 2px;
+  }
+
+  .success-sub {
+    font-size: 12px;
+    color: #4a5568;
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <div>
+      <div class="logo-text">NEXUS TRADER</div>
+      <div class="logo-sub">AI-POWERED CRYPTO BOT</div>
+    </div>
+  </div>
+
+  <!-- Login form -->
+  <div id="loginForm">
+    <div class="title">Secure Access</div>
+    <div class="subtitle">Enter your dashboard password to continue.</div>
+
+    <div class="field">
+      <label>Password</label>
+      <div class="input-wrap">
+        <input
+          type="password"
+          id="passwordInput"
+          placeholder="••••••••••••"
+          autocomplete="current-password"
+          autofocus
+        />
+        <button class="toggle-eye" onclick="toggleVisibility()" tabindex="-1" title="Show/hide">
+          <span id="eyeIcon">👁</span>
+        </button>
+      </div>
+    </div>
+
+    <button class="btn-login" id="loginBtn" onclick="doLogin()">
+      <span class="btn-text">ENTER DASHBOARD</span>
+      <div class="spinner"></div>
+    </button>
+
+    <div class="error-msg" id="errorMsg">⚠ Incorrect password — try again</div>
+  </div>
+
+  <!-- Success state -->
+  <div class="success-overlay" id="successOverlay">
+    <div class="check-circle">✓</div>
+    <div class="success-text">ACCESS GRANTED</div>
+    <div class="success-sub">Redirecting to dashboard...</div>
+  </div>
+
+  <div class="card-footer">
+    <span class="lock-icon">🔒</span>
+    <span>Protected by DASHBOARD_PASSWORD</span>
+  </div>
+</div>
+
+<script>
+  const input = document.getElementById('passwordInput');
+  const btn   = document.getElementById('loginBtn');
+  const err   = document.getElementById('errorMsg');
+
+  // Allow Enter key
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  function toggleVisibility() {
+    const isPass = input.type === 'password';
+    input.type = isPass ? 'text' : 'password';
+    document.getElementById('eyeIcon').textContent = isPass ? '🙈' : '👁';
+  }
+
+  async function doLogin() {
+    const password = input.value.trim();
+    if (!password) {
+      showError('Please enter your password');
+      return;
+    }
+
+    // Loading state
+    btn.classList.add('loading');
+    btn.disabled = true;
+    err.classList.remove('visible');
+    input.classList.remove('error');
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
+
+      if (res.ok) {
+        // Show success
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('successOverlay').classList.add('visible');
+        setTimeout(() => { window.location.href = '/'; }, 1200);
+      } else {
+        showError('Incorrect password — try again');
+        input.value = '';
+        input.focus();
+      }
+    } catch (e) {
+      showError('Connection error — please try again');
+    } finally {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+  }
+
+  function showError(msg) {
+    err.textContent = '⚠ ' + msg;
+    err.classList.remove('visible');
+    // Force reflow for animation replay
+    void err.offsetWidth;
+    err.classList.add('visible');
+    input.classList.add('error');
+    setTimeout(() => input.classList.remove('error'), 600);
+  }
+
+  // Check if already authenticated
+  fetch('/api/auth/check').then(r => r.json()).then(d => {
+    if (d.authenticated) window.location.href = '/';
+  }).catch(() => {});
+</script>
+</body>
+</html>
