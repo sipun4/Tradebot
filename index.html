@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXUS TRADER — AI Crypto Bot</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#070a0f;--panel:#0d1117;--border:#1a2332;--accent:#00f5a0;--accent2:#00d4ff;--danger:#ff3b5c;--warn:#ffa726;--text:#e2e8f0;--muted:#4a5568}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,245,160,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,160,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+  body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.05) 2px,rgba(0,0,0,.05) 4px);pointer-events:none;z-index:0}
+  header{position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--border);background:rgba(7,10,15,.95);backdrop-filter:blur(20px)}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 20px rgba(0,245,160,.3)}
+  .logo-text{font-family:'Space Mono',monospace;font-size:16px;font-weight:700;letter-spacing:3px;color:var(--accent)}
+  .logo-sub{font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:2px}
+  .header-right{display:flex;align-items:center;gap:10px}
+  .status-badge{display:flex;align-items:center;gap:8px;padding:7px 14px;border-radius:20px;font-size:11px;font-family:'Space Mono',monospace;letter-spacing:1px;border:1px solid;transition:all .3s}
+  .status-badge.running{color:var(--accent);border-color:var(--accent);background:rgba(0,245,160,.05)}
+  .status-badge.stopped{color:var(--muted);border-color:var(--border)}
+  .pulse{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 1.5s infinite}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+  .mode-toggle{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:11px;font-family:'Space Mono',monospace}
+  .mode-btn{padding:7px 14px;background:transparent;color:var(--muted);border:none;cursor:pointer;transition:all .2s;letter-spacing:1px}
+  .mode-btn.active{background:var(--accent);color:var(--bg);font-weight:700}
+  .btn{padding:9px 18px;border-radius:8px;border:none;cursor:pointer;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1px;transition:all .2s}
+  .btn-start{background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--bg)}
+  .btn-start:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,245,160,.3)}
+  .btn-stop{background:transparent;color:var(--danger);border:1px solid var(--danger)}
+  .btn-stop:hover{background:rgba(255,59,92,.1)}
+  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+  .btn-ghost:hover{color:var(--danger);border-color:var(--danger)}
+  main{position:relative;z-index:1;padding:20px 28px;max-width:1600px;margin:0 auto}
+  .ticker-bar{background:rgba(0,245,160,.03);border:1px solid var(--border);border-radius:8px;padding:9px 18px;margin-bottom:18px;display:flex;align-items:center;gap:14px;overflow:hidden}
+  .ticker-label{font-size:10px;letter-spacing:2px;color:var(--accent);font-family:'Space Mono',monospace;flex-shrink:0;border-right:1px solid var(--border);padding-right:14px}
+  .ticker-content{display:flex;gap:28px;flex:1;overflow:hidden}
+  .ticker-item{display:flex;align-items:center;gap:8px;white-space:nowrap;font-family:'Space Mono',monospace;font-size:11px;flex-shrink:0}
+  .stats-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:20px}
+  .stat-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px;position:relative;overflow:hidden;transition:border-color .3s}
+  .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),transparent);opacity:0;transition:opacity .3s}
+  .stat-card:hover::before{opacity:1}
+  .stat-card:hover{border-color:rgba(0,245,160,.2)}
+  .stat-label{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:7px}
+  .stat-value{font-family:'Space Mono',monospace;font-size:22px;font-weight:700}
+  .stat-value.green{color:var(--accent)}.stat-value.red{color:var(--danger)}.stat-value.blue{color:var(--accent2)}
+  .stat-sub{font-size:10px;color:var(--muted);margin-top:3px}
+  .panels-grid{display:grid;grid-template-columns:1fr 1fr 360px;gap:18px;margin-bottom:18px}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+  .panel-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+  .panel-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+  .panel-body{max-height:360px;overflow-y:auto}
+  .panel-body::-webkit-scrollbar{width:3px}
+  .panel-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  .signal-row{display:grid;grid-template-columns:110px 58px 72px 52px 1fr;align-items:center;padding:10px 18px;border-bottom:1px solid rgba(255,255,255,.03);font-size:11px;gap:8px;transition:background .15s}
+  .signal-row:hover{background:rgba(255,255,255,.02)}
+  .signal-action{display:inline-flex;align-items:center;justify-content:center;padding:2px 7px;border-radius:4px;font-size:9px;font-family:'Space Mono',monospace;font-weight:700;letter-spacing:1px}
+  .action-buy{background:rgba(0,245,160,.1);color:var(--accent);border:1px solid rgba(0,245,160,.2)}
+  .action-sell{background:rgba(255,59,92,.1);color:var(--danger);border:1px solid rgba(255,59,92,.2)}
+  .action-hold{background:rgba(74,85,104,.2);color:var(--muted);border:1px solid var(--border)}
+  .action-arb{background:rgba(255,167,38,.1);color:var(--warn);border:1px solid rgba(255,167,38,.2)}
+  .sig-tag{font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(0,212,255,.08);color:var(--accent2);font-family:'Space Mono',monospace}
+  .arb-tag{background:rgba(255,167,38,.1);color:var(--warn)}
+  .poly-tag{background:rgba(167,139,250,.1);color:#a78bfa}
+  .trade-row{display:grid;grid-template-columns:48px 100px 58px 82px 88px 68px;align-items:center;padding:10px 18px;border-bottom:1px solid rgba(255,255,255,.03);font-size:11px;gap:8px;transition:background .15s}
+  .trade-row:hover{background:rgba(255,255,255,.02)}
+  .t-status{font-size:9px;padding:2px 7px;border-radius:3px;font-family:'Space Mono',monospace;text-align:center}
+  .s-exec{background:rgba(0,245,160,.1);color:var(--accent)}
+  .s-open{background:rgba(0,212,255,.1);color:var(--accent2)}
+  .s-fail{background:rgba(255,59,92,.1);color:var(--danger)}
+  .s-paper{background:rgba(255,167,38,.1);color:var(--warn)}
+  .market-row{display:grid;grid-template-columns:88px 1fr 92px 70px;align-items:center;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.03);gap:12px;cursor:pointer;transition:background .15s}
+  .market-row:hover{background:rgba(255,255,255,.02)}
+  .mini-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+  .mini-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .5s}
+  .ai-card{background:rgba(0,245,160,.04);border:1px solid rgba(0,245,160,.15);border-radius:10px;padding:12px;margin-bottom:10px}
+  .conf-track{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+  .conf-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .5s}
+  .arb-alert{background:rgba(255,167,38,.05);border:1px solid rgba(255,167,38,.2);border-radius:7px;padding:9px 13px;margin:7px 18px;font-size:10px;color:var(--warn);font-family:'Space Mono',monospace;display:flex;align-items:center;gap:8px;animation:fadeIn .3s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+  .poly-section{position:relative;z-index:1;padding:0 28px 28px;max-width:1600px;margin:0 auto}
+  .poly-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .empty-state{padding:36px 18px;text-align:center;color:var(--muted);font-size:11px;letter-spacing:1px}
+  .setup-panel{background:var(--panel);border:1px solid rgba(0,245,160,.15);border-radius:14px;padding:26px;margin-bottom:20px}
+  .setup-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .setup-step{background:rgba(0,245,160,.03);border:1px solid var(--border);border-radius:10px;padding:16px}
+  .step-num{font-family:'Space Mono',monospace;font-size:24px;font-weight:700;color:var(--accent);opacity:.3;margin-bottom:6px}
+  .code-block{background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:5px;padding:8px 11px;font-family:'Space Mono',monospace;font-size:10px;color:var(--accent);margin-top:7px;white-space:pre;overflow-x:auto}
+  .watermark{position:fixed;bottom:14px;right:20px;font-size:9px;color:var(--muted);letter-spacing:1px;font-family:'Space Mono',monospace;opacity:.4;z-index:1}
+  mono{font-family:'Space Mono',monospace}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <div>
+      <div class="logo-text">NEXUS TRADER</div>
+      <div class="logo-sub">AI-POWERED CRYPTO BOT</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="paperBtn" onclick="setMode('paper')">📝 PAPER</button>
+      <button class="mode-btn" id="liveBtn" onclick="setMode('live')">💸 LIVE</button>
+    </div>
+    <div class="status-badge stopped" id="statusBadge">
+      <div class="pulse" style="background:var(--muted)"></div>
+      <span>OFFLINE</span>
+    </div>
+    <button class="btn btn-start" id="startBtn" onclick="startBot()">▶ START BOT</button>
+    <button class="btn btn-stop" id="stopBtn" onclick="stopBot()" style="display:none">⏹ STOP</button>
+    <div style="font-size:9px;color:var(--muted);font-family:'Space Mono',monospace;text-align:right;line-height:1.6">
+      <div style="color:var(--accent2)" id="minTradeInfo">Min: ₹100 | ONE TRADE AT A TIME</div>
+    </div>
+    <button class="btn btn-ghost" onclick="doLogout()">🔒 LOGOUT</button>
+  </div>
+</header>
+
+<main>
+  <div class="setup-panel" id="setupPanel">
+    <div style="font-size:13px;font-weight:700;color:var(--accent);letter-spacing:2px;margin-bottom:16px">⚡ QUICK SETUP</div>
+    <div class="setup-steps">
+      <div class="setup-step">
+        <div class="step-num">01</div>
+        <div style="font-size:12px;font-weight:700;margin-bottom:5px">Environment Variables</div>
+        <div style="font-size:11px;color:var(--muted)">Add in Render → Environment tab</div>
+        <div class="code-block">COINSWITCH_API_KEY
+COINSWITCH_SECRET_KEY
+GROQ_API_KEY
+DASHBOARD_PASSWORD
+FLASK_SECRET_KEY</div>
+      </div>
+      <div class="setup-step">
+        <div class="step-num">02</div>
+        <div style="font-size:12px;font-weight:700;margin-bottom:5px">Start the Bot</div>
+        <div style="font-size:11px;color:var(--muted)">Paper mode = simulation (safe). Live = real trades.</div>
+        <div class="code-block">Paper mode: no real money
+Live mode:  real trades ⚠️</div>
+      </div>
+      <div class="setup-step">
+        <div class="step-num">03</div>
+        <div style="font-size:12px;font-weight:700;margin-bottom:5px">Monitor Dashboard</div>
+        <div style="font-size:11px;color:var(--muted)">Live signals, AI analysis + Polymarket arb below.</div>
+        <div class="code-block">Signals:    refresh 3s
+Polymarket: refresh 15s</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ticker-bar">
+    <div class="ticker-label">LIVE FEED</div>
+    <div class="ticker-content" id="tickerContent">
+      <div class="ticker-item" style="color:var(--muted)">Connecting to market data...</div>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">Total Trades</div><div class="stat-value blue" id="sT">0</div><div class="stat-sub">All time</div></div>
+    <div class="stat-card"><div class="stat-label">Win Rate</div><div class="stat-value green" id="sWR">—%</div><div class="stat-sub">Target &gt;60%</div></div>
+    <div class="stat-card"><div class="stat-label">Wins / Losses</div><div class="stat-value" id="sWL">0 / 0</div><div class="stat-sub">Outcomes</div></div>
+    <div class="stat-card"><div class="stat-label">Total P&L</div><div class="stat-value" id="sPL">₹0.00</div><div class="stat-sub">INR profit</div></div>
+    <div class="stat-card"><div class="stat-label">Scans</div><div class="stat-value blue" id="sSC">0</div><div class="stat-sub">Since start</div></div>
+    <div class="stat-card"><div class="stat-label">Arb Alerts</div><div class="stat-value" id="sAR">0</div><div class="stat-sub">Opportunities</div></div>
+    <div class="stat-card" id="tradeSlotCard" style="border-color:rgba(0,245,160,.2)">
+      <div class="stat-label">Trade Slot</div>
+      <div class="stat-value green" id="sSlot" style="font-size:16px">FREE</div>
+      <div class="stat-sub" id="sSlotDetail">Ready for next trade</div>
+    </div>
+  </div>
+
+  <div class="panels-grid">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><div class="dot"></div> LIVE SIGNALS</div>
+        <div style="font-size:10px;color:var(--muted);font-family:'Space Mono',monospace" id="sigCount">0 signals</div>
+      </div>
+      <div style="display:grid;grid-template-columns:110px 58px 72px 52px 1fr;padding:7px 18px;font-size:9px;color:var(--muted);letter-spacing:1px;border-bottom:1px solid var(--border);gap:8px">
+        <span>SYMBOL</span><span>ACTION</span><span>PRICE</span><span>RSI</span><span>SIGNALS</span>
+      </div>
+      <div class="panel-body" id="sigBox"><div class="empty-state">Start the bot to see live signals</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><div class="dot" style="background:var(--accent2)"></div> MARKET OVERVIEW</div>
+        <span style="font-size:9px;color:var(--muted);font-family:'Space Mono',monospace">INR PAIRS</span>
+      </div>
+      <div class="panel-body" id="mktBox"><div class="empty-state">Loading...</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><div class="dot" style="background:#a78bfa"></div> GROQ AI ENGINE</div>
+        <span style="font-size:9px;color:#a78bfa;font-family:'Space Mono',monospace">llama-3.3-70b</span>
+      </div>
+      <div style="max-height:360px;overflow-y:auto" id="aiBox">
+        <div style="padding:24px;text-align:center;color:var(--muted)">
+          <div style="font-size:28px;margin-bottom:10px">🤖</div>
+          <div style="font-size:11px">AI Engine Standby</div>
+          <div style="font-size:10px;margin-top:7px;line-height:1.6">Start the bot to<br>see real-time analysis</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom:20px">
+    <div class="panel-header">
+      <div class="panel-title"><div class="dot" style="background:var(--warn)"></div> TRADE LOG</div>
+      <div style="display:flex;gap:8px;font-size:9px;font-family:'Space Mono',monospace">
+        <span style="color:var(--accent)">● EXEC</span>
+        <span style="color:var(--accent2)">● OPEN</span>
+        <span style="color:var(--danger)">● FAIL</span>
+        <span style="color:var(--warn)">● PAPER</span>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:48px 100px 58px 82px 88px 68px;padding:7px 18px;font-size:9px;color:var(--muted);letter-spacing:1px;border-bottom:1px solid var(--border);gap:8px">
+      <span>ID</span><span>SYMBOL</span><span>SIDE</span><span>PRICE</span><span>VALUE(₹)</span><span>STATUS</span>
+    </div>
+    <div class="panel-body" id="trBox" style="max-height:210px"><div class="empty-state">No trades yet</div></div>
+  </div>
+</main>
+
+<div class="poly-section">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+    <div style="width:6px;height:6px;border-radius:50%;background:#a78bfa"></div>
+    <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#a78bfa;font-family:'Space Mono',monospace">Polymarket Intelligence Engine</div>
+    <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(167,139,250,.2),transparent)"></div>
+    <div style="font-size:9px;color:var(--muted);font-family:'Space Mono',monospace" id="polyStats">Waiting for scan...</div>
+  </div>
+  <div class="poly-grid">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><div class="dot" style="background:#a78bfa"></div> MARKET MISPRICING DETECTOR</div>
+        <span style="font-size:9px;color:#a78bfa;font-family:'Space Mono',monospace">AI PROB VS MARKET</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 65px 65px 55px 68px;padding:7px 18px;font-size:9px;color:var(--muted);letter-spacing:1px;border-bottom:1px solid var(--border);gap:8px">
+        <span>QUESTION</span><span>MARKET</span><span>AI PROB</span><span>EDGE</span><span>SIGNAL</span>
+      </div>
+      <div class="panel-body" id="mispBox" style="max-height:400px">
+        <div class="empty-state"><div style="font-size:20px;margin-bottom:8px">🔮</div>Waiting for Polymarket scan...</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><div class="dot" style="background:var(--warn)"></div> CORRELATED MARKET ARBITRAGE</div>
+        <span style="font-size:9px;color:var(--warn);font-family:'Space Mono',monospace">DIVERGENCE DETECTOR</span>
+      </div>
+      <div style="padding:10px 18px;border-bottom:1px solid var(--border);font-size:11px;color:var(--muted);line-height:1.6">
+        Correlated markets that diverge beyond their historical spread signal an arbitrage opportunity.
+      </div>
+      <div class="panel-body" id="arbBox" style="max-height:360px">
+        <div class="empty-state"><div style="font-size:20px;margin-bottom:8px">🔗</div>Scanning correlated pairs...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="watermark">NEXUS TRADER v2.0 · GROQ AI + COINSWITCH PRO + POLYMARKET ARB</div>
+
+<script>
+'use strict';
+// ── STATE ─────────────────────────────────────────────────
+let isRunning=false, currentMode='paper';
+let refreshIv=null, marketIv=null;
+let demoScans=0, demoTrades=0, demoWins=0;
+let demoSigs=[], demoTrades_=[];
+const PAIRS=['BTC/INR','ETH/INR','XRP/INR','DOGE/INR','MATIC/INR'];
+const PX={'BTC/INR':5600000,'ETH/INR':290000,'XRP/INR':52,'DOGE/INR':14,'MATIC/INR':65};
+
+// ── AUTH ──────────────────────────────────────────────────
+async function doLogout(){
+  await fetch('/api/auth/logout',{method:'POST'}).catch(()=>{});
+  location.href='/login';
+}
+async function chkAuth(){
+  try{const r=await fetch('/api/auth/check');const d=await r.json();if(!d.authenticated)location.href='/login';}catch(e){}
+}
+
+// ── BOT CONTROL ───────────────────────────────────────────
+async function startBot(){
+  if(currentMode==='live'&&!confirm('⚠️ LIVE trading uses real money!\nAre you sure?'))return;
+  try{
+    const r=await fetch('/api/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({live_mode:currentMode==='live'})});
+    const d=await r.json();
+    if(d.success){setRun(true);document.getElementById('setupPanel').style.display='none';refreshIv=setInterval(fetchSt,3000);marketIv=setInterval(fetchMkt,10000);fetchSt();fetchMkt();}
+  }catch(e){setRun(true);document.getElementById('setupPanel').style.display='none';startDemo();}
+}
+async function stopBot(){
+  try{await fetch('/api/stop',{method:'POST'});}catch(e){}
+  setRun(false);clearInterval(refreshIv);clearInterval(marketIv);
+}
+function setMode(m){
+  currentMode=m;
+  document.getElementById('paperBtn').classList.toggle('active',m==='paper');
+  document.getElementById('liveBtn').classList.toggle('active',m==='live');
+  document.getElementById('liveBtn').style.cssText=m==='live'?'background:rgba(255,59,92,.15);color:var(--danger);border-left:1px solid var(--danger)':'';
+}
+function setRun(on){
+  isRunning=on;
+  const b=document.getElementById('statusBadge'),s=document.getElementById('startBtn'),e=document.getElementById('stopBtn');
+  if(on){b.className='status-badge running';b.innerHTML=`<div class="pulse"></div><span>${currentMode.toUpperCase()} MODE</span>`;s.style.display='none';e.style.display='block';}
+  else{b.className='status-badge stopped';b.innerHTML='<div class="pulse" style="background:var(--muted)"></div><span>OFFLINE</span>';s.style.display='block';e.style.display='none';}
+}
+
+// ── FETCH ─────────────────────────────────────────────────
+async function fetchSt(){
+  try{const r=await fetch('/api/status');const d=await r.json();updStats(d.stats||{});updTradeSlot(d);renderSigs(d.recent_signals||[]);renderTrades(d.recent_trades||[]);renderAI(d.recent_signals||[]);}catch(e){}
+}
+async function fetchMkt(){
+  try{const r=await fetch('/api/tickers');const d=await r.json();if(d.data){renderMkt(d.data);updTicker(d.data);}}catch(e){}
+}
+async function fetchPoly(){
+  try{
+    const[mR,aR]=await Promise.all([fetch('/api/polymarket/mispricing'),fetch('/api/polymarket/arb')]);
+    const mD=await mR.json(),aD=await aR.json();
+    renderMisp(mD.alerts||[]);renderArbs(aD.alerts||[]);
+    document.getElementById('polyStats').textContent=`Mispricing: ${(mD.alerts||[]).length} | Arb pairs: ${(aD.alerts||[]).length}`;
+  }catch(e){}
+}
+
+// ── RENDER ────────────────────────────────────────────────
+function updStats(s){
+  el('sT').textContent=s.total_trades||0;
+  const wr=s.win_rate||0;el('sWR').textContent=wr+'%';el('sWR').className='stat-value '+(wr>=60?'green':wr>=45?'blue':'red');
+  el('sWL').textContent=`${s.winning_trades||0} / ${s.losing_trades||0}`;
+  const pnl=s.total_pnl_inr||s.total_pnl||0;el('sPL').textContent=(pnl>=0?'+':'')+'₹'+pnl.toFixed(2);el('sPL').className='stat-value '+(pnl>=0?'green':'red');
+  el('sSC').textContent=s.scans||0;
+  el('sAR').textContent=s.arb_opportunities_found||0;
+}
+
+function updTradeSlot(d) {
+  const slot = d.trade_slot || 'FREE';
+  const ct   = d.current_trade || {};
+  const slotEl   = el('sSlot');
+  const detailEl = el('sSlotDetail');
+  const cardEl   = el('tradeSlotCard');
+  if (slot === 'FREE') {
+    slotEl.textContent   = 'FREE';
+    slotEl.className     = 'stat-value green';
+    detailEl.textContent = 'Ready for next trade';
+    cardEl.style.borderColor = 'rgba(0,245,160,.2)';
+  } else {
+    slotEl.textContent   = 'BUSY';
+    slotEl.className     = 'stat-value' + (ct.status==='OPEN'?' blue':' red');
+    detailEl.textContent = ct.symbol ? `${ct.symbol} ${ct.action} — ${ct.status}` : 'Trade in progress...';
+    cardEl.style.borderColor = 'rgba(0,212,255,.3)';
+  }
+  // Show min trade info
+  if (d.stats && d.stats.min_trade_inr) {
+    el('minTradeInfo').textContent = `Min: ₹${d.stats.min_trade_inr} | Max: ₹${d.stats.max_trade_inr}`;
+  }
+}
+
+function renderSigs(sigs){
+  el('sigCount').textContent=sigs.length+' signals';
+  if(!sigs.length){el('sigBox').innerHTML='<div class="empty-state">Scanning markets...</div>';return;}
+  let h='';
+  sigs.filter(s=>s.signals&&s.signals.some(x=>x.includes('ARB'))).forEach(s=>{
+    h+=`<div class="arb-alert">⚡ ARB: ${s.symbol} | ${(s.signals||[]).find(x=>x.includes('ARB'))||''}</div>`;
+  });
+  sigs.slice(0,30).forEach(s=>{
+    const ac=s.action==='BUY'?'action-buy':s.action==='SELL'?'action-sell':s.action==='ARB'?'action-arb':'action-hold';
+    const rc=s.rsi<35?'color:var(--accent)':s.rsi>65?'color:var(--danger)':'color:var(--muted)';
+    const tags=(s.signals||[]).slice(0,3).map(t=>{
+      const c=t.includes('ARB')?'arb-tag':t.includes('POLY')?'poly-tag':'';
+      return `<span class="sig-tag ${c}">${t.replace(/^(RSI_|BB_|TREND_|AI_|MOMENTUM_)/,'').substring(0,14)}</span>`;
+    }).join('');
+    h+=`<div class="signal-row">
+      <div style="font-family:'Space Mono',monospace;font-size:12px;font-weight:700">${s.symbol}</div>
+      <div><span class="signal-action ${ac}">${s.action}</span></div>
+      <div style="font-family:'Space Mono',monospace;font-size:10px">₹${fp(s.price)}</div>
+      <div style="font-family:'Space Mono',monospace;font-size:10px;${rc}">${s.rsi||'—'}</div>
+      <div style="display:flex;gap:3px;flex-wrap:wrap">${tags}</div>
+    </div>`;
+  });
+  el('sigBox').innerHTML=h;
+}
+
+function renderTrades(trades){
+  if(!trades.length){el('trBox').innerHTML='<div class="empty-state">No trades yet</div>';return;}
+  let h='';
+  [...trades].reverse().forEach(t=>{
+    const sc=t.status==='EXECUTED'?'s-exec':t.status==='OPEN'?'s-open':t.status==='FAILED'?'s-fail':'s-paper';
+    const ac=t.action==='BUY'?'var(--accent)':'var(--danger)';
+    h+=`<div class="trade-row">
+      <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted)">${t.id||'—'}</div>
+      <div style="font-family:'Space Mono',monospace;font-size:11px;font-weight:700">${t.symbol}</div>
+      <div style="color:${ac};font-family:'Space Mono',monospace;font-size:11px;font-weight:700">${t.action}</div>
+      <div style="font-family:'Space Mono',monospace;font-size:10px">$${fp(t.price)}</div>
+      <div style="font-family:'Space Mono',monospace;font-size:10px">${t.value_inr ? '₹'+t.value_inr.toFixed(0) : '$'+(t.value_usdt||0).toFixed(2)}</div>
+      <div><span class="t-status ${sc}">${t.mode==='PAPER'?'PAPER':t.status}</span></div>
+    </div>`;
+  });
+  el('trBox').innerHTML=h;
+}
+
+function renderMkt(data){
+  let h='';
+  PAIRS.forEach(pair=>{
+    const key=Object.keys(data).find(k=>k.toUpperCase().replace('/','').includes(pair.replace('/','').toUpperCase()));
+    if(!key)return;
+    const d=data[key];
+    const price=parseFloat(d.lastPrice||0),ch=parseFloat(d.percentageChange||0);
+    const hi=parseFloat(d.highPrice||0),lo=parseFloat(d.lowPrice||0);
+    const pos=(hi-lo)>0?((price-lo)/(hi-lo)*100):50;
+    const cc=ch>=0?'var(--accent)':'var(--danger)';
+    h+=`<div class="market-row">
+      <div style="font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:${cc}">${pair.split('/')[0]}</div>
+      <div>
+        <div class="mini-bar"><div class="mini-bar-fill" style="width:${Math.min(pos,100)}%"></div></div>
+        <div style="font-size:9px;color:var(--muted);margin-top:3px;font-family:'Space Mono',monospace">$${fp(lo)} — $${fp(hi)}</div>
+      </div>
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:13px;font-weight:700">$${fp(price)}</div>
+        <div style="font-size:10px;color:${cc};font-family:'Space Mono',monospace">${ch>=0?'+':''}${ch.toFixed(2)}%</div>
+      </div>
+      <div style="font-size:9px;color:var(--muted);font-family:'Space Mono',monospace;text-align:right">${parseFloat(d.baseVolume||0).toFixed(1)}<br><span style="font-size:8px">VOL</span></div>
+    </div>`;
+  });
+  el('mktBox').innerHTML=h||'<div class="empty-state">No data</div>';
+}
+
+function updTicker(data){
+  let h='';
+  Object.entries(data).slice(0,10).forEach(([k,d])=>{
+    const ch=parseFloat(d.percentageChange||0),c=ch>=0?'var(--accent)':'var(--danger)';
+    h+=`<div class="ticker-item"><span style="font-weight:700">${k}</span><span>$${fp(parseFloat(d.lastPrice||0))}</span><span style="color:${c}">${ch>=0?'▲':'▼'}${Math.abs(ch).toFixed(2)}%</span></div>`;
+  });
+  el('tickerContent').innerHTML=h||'<div style="color:var(--muted)">No data</div>';
+}
+
+function renderAI(sigs){
+  const ai=sigs.filter(s=>s.ai&&s.ai.signal&&s.ai.signal!=='HOLD').slice(0,4);
+  if(!ai.length){el('aiBox').innerHTML='<div style="padding:16px 18px"><div style="font-size:10px;color:var(--accent);font-family:\'Space Mono\',monospace;margin-bottom:10px">AI ANALYZING ···</div><div style="font-size:10px;color:var(--muted);line-height:1.8">Model: llama-3.3-70b<br>Provider: Groq<br>Status: Waiting...</div></div>';return;}
+  let h='';
+  ai.forEach(s=>{
+    const a=s.ai,ac=a.signal==='BUY'?'var(--accent)':a.signal==='SELL'?'var(--danger)':a.signal==='ARB'?'var(--warn)':'var(--muted)';
+    const rc=a.risk_level==='LOW'?'var(--accent)':a.risk_level==='HIGH'?'var(--danger)':'var(--warn)';
+    h+=`<div style="padding:12px 18px;border-bottom:1px solid var(--border)">
+      <div class="ai-card">
+        <div style="font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:5px">${s.symbol} · ${new Date(s.timestamp).toLocaleTimeString()}</div>
+        <div style="font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:${ac};margin-bottom:5px">${a.signal}</div>
+        <div style="font-size:10px;color:var(--muted);line-height:1.5">${a.reason||a.reasoning||'Analyzing...'}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:9px">
+          <div style="font-size:9px;color:var(--muted);font-family:'Space Mono',monospace;width:75px">CONFIDENCE</div>
+          <div class="conf-track"><div class="conf-fill" style="width:${a.confidence||0}%"></div></div>
+          <div style="font-size:9px;color:var(--accent);font-family:'Space Mono',monospace;width:28px">${a.confidence||0}%</div>
+        </div>
+        <div style="margin-top:7px;font-size:9px;color:${rc};font-family:'Space Mono',monospace">RISK: ${a.risk_level||'?'}</div>
+      </div>
+    </div>`;
+  });
+  el('aiBox').innerHTML=h;
+}
+
+function renderMisp(alerts){
+  if(!alerts.length){el('mispBox').innerHTML='<div class="empty-state">No mispricing detected</div>';return;}
+  let h='';
+  alerts.forEach(a=>{
+    const edge=((a.edge||0)*100).toFixed(1),mkt=((a.market_price||0)*100).toFixed(1),ai=((a.ai_probability||0)*100).toFixed(1);
+    const isUp=(a.ai_probability||0)>(a.market_price||0);
+    const ec=parseFloat(edge)>=10?'var(--accent)':'var(--warn)';
+    const dc=a.direction==='BUY_YES'?'var(--accent)':a.direction==='BUY_NO'?'var(--danger)':'var(--muted)';
+    const dl=a.direction==='BUY_YES'?'BUY YES':a.direction==='BUY_NO'?'BUY NO':'HOLD';
+    const rc=a.risk_level==='LOW'?'var(--accent)':a.risk_level==='HIGH'?'var(--danger)':'var(--warn)';
+    h+=`<div style="padding:12px 18px;border-bottom:1px solid rgba(255,255,255,.03)">
+      <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:7px;line-height:1.4">${(a.question||'N/A').substring(0,85)}${(a.question||'').length>85?'…':''}</div>
+      <div style="display:grid;grid-template-columns:1fr 65px 65px 55px 68px;gap:8px;align-items:center">
+        <div style="font-size:10px;color:var(--muted)">${(a.reasoning||'').substring(0,60)}${(a.reasoning||'').length>60?'…':''}</div>
+        <div style="font-family:'Space Mono',monospace;font-size:11px;font-weight:700">${mkt}%</div>
+        <div style="font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:${isUp?'var(--accent)':'var(--danger)'}">${ai}%</div>
+        <div style="font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:${ec}">${edge}%</div>
+        <div style="font-size:9px;padding:2px 7px;border-radius:3px;text-align:center;font-family:'Space Mono',monospace;font-weight:700;background:rgba(167,139,250,.1);color:${dc};border:1px solid rgba(167,139,250,.2)">${dl}</div>
+      </div>
+      <div style="display:flex;gap:5px;margin-top:7px;flex-wrap:wrap">
+        ${(a.key_factors||[]).slice(0,3).map(f=>`<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(167,139,250,.08);color:#a78bfa;font-family:'Space Mono',monospace">${(f||'').substring(0,22)}</span>`).join('')}
+        <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(255,255,255,.04);color:${rc};font-family:'Space Mono',monospace">${a.risk_level||'?'} RISK</span>
+        <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(255,255,255,.04);color:var(--muted);font-family:'Space Mono',monospace">VOL $${((a.volume||0)/1000).toFixed(0)}K</span>
+      </div>
+    </div>`;
+  });
+  el('mispBox').innerHTML=h;
+}
+
+function renderArbs(alerts){
+  if(!alerts.length){el('arbBox').innerHTML='<div class="empty-state">No correlated divergence</div>';return;}
+  let h='';
+  alerts.forEach(a=>{
+    const sp=((a.current_spread||0)*100).toFixed(1),eg=((a.arb_edge||0)*100).toFixed(1),cf=a.confidence||0;
+    const ac=a.action==='BUY_A_SELL_B'?'var(--accent)':a.action==='BUY_B_SELL_A'?'var(--accent2)':'var(--muted)';
+    h+=`<div style="padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.03)">
+      <div style="font-size:10px;font-weight:700;color:var(--warn);letter-spacing:1px;margin-bottom:9px">⚡ ${a.description||'CORRELATED ARB'}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:9px">
+        <div style="background:rgba(0,245,160,.04);border:1px solid rgba(0,245,160,.1);border-radius:7px;padding:9px">
+          <div style="font-size:8px;color:var(--muted);letter-spacing:1px;margin-bottom:3px">MARKET A</div>
+          <div style="font-size:10px;color:var(--text);margin-bottom:3px">${(a.market_a||'N/A').substring(0,40)}…</div>
+          <div style="font-family:'Space Mono',monospace;font-size:15px;font-weight:700;color:var(--accent)">${((a.price_a||0)*100).toFixed(1)}%</div>
+        </div>
+        <div style="background:rgba(0,212,255,.04);border:1px solid rgba(0,212,255,.1);border-radius:7px;padding:9px">
+          <div style="font-size:8px;color:var(--muted);letter-spacing:1px;margin-bottom:3px">MARKET B</div>
+          <div style="font-size:10px;color:var(--text);margin-bottom:3px">${(a.market_b||'N/A').substring(0,40)}…</div>
+          <div style="font-family:'Space Mono',monospace;font-size:15px;font-weight:700;color:var(--accent2)">${((a.price_b||0)*100).toFixed(1)}%</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:9px;font-family:'Space Mono',monospace">
+        <span>SPREAD <span style="color:var(--warn)">${sp}%</span></span>
+        <span>EDGE <span style="color:var(--accent)">${eg}%</span></span>
+        <span>AI <span style="color:var(--accent2)">${cf}%</span></span>
+        <span style="padding:2px 8px;border-radius:3px;font-weight:700;color:${ac};background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1)">${a.action||'HOLD'}</span>
+        <span style="color:var(--muted)">→ ${a.convergence||'?'}</span>
+      </div>
+      ${a.reasoning?`<div style="font-size:10px;color:var(--muted);margin-top:7px;line-height:1.5">${a.reasoning}</div>`:''}
+    </div>`;
+  });
+  el('arbBox').innerHTML=h;
+}
+
+// ── DEMO MODE ─────────────────────────────────────────────
+function startDemo(){
+  runDemoScan();updateDemoMkt();
+  refreshIv=setInterval(runDemoScan,3000);
+  marketIv=setInterval(updateDemoMkt,5000);
+  setTimeout(showDemoPoly,2000);
+  setInterval(showDemoPoly,15000);
+}
+
+function runDemoScan(){
+  demoScans++;
+  PAIRS.forEach(pair=>{
+    PX[pair]*=(1+(Math.random()-.5)*.002);
+    const price=PX[pair],rsi=28+Math.random()*48;
+    const actions=['BUY','SELL','HOLD','HOLD','HOLD'];
+    const action=actions[Math.floor(Math.random()*actions.length)];
+    const sigs=[];
+    if(rsi<35)sigs.push('RSI_OVERSOLD');else if(rsi>65)sigs.push('RSI_OVERBOUGHT');
+    if(Math.random()>.72)sigs.push('BB_'+(action==='BUY'?'LOWER':'UPPER')+'_TOUCH');
+    if(Math.random()>.82)sigs.push('ARB_SPREAD_0.'+(Math.floor(Math.random()*8)+2)+'%');
+    if(action!=='HOLD')sigs.push(`AI_${action}_${Math.floor(62+Math.random()*30)}`);
+    demoSigs.unshift({symbol:pair,action,score:action==='BUY'?3:action==='SELL'?-3:1,signals:sigs,price,rsi:rsi.toFixed(1),trend:rsi>55?'BULLISH':rsi<45?'BEARISH':'NEUTRAL',
+      ai:{signal:action,confidence:Math.floor(62+Math.random()*32),reason:`${pair} ${action==='BUY'?'oversold — momentum building':action==='SELL'?'overbought — resistance ahead':'neutral — no clear edge'}`,risk_level:rsi>70||rsi<30?'HIGH':'MEDIUM'},
+      timestamp:new Date().toISOString()});
+    if(action!=='HOLD'&&Math.random()>.65){
+      demoTrades++;if(Math.random()>.38)demoWins++;
+      demoTrades_.push({id:`T${String(demoTrades).padStart(4,'0')}`,symbol:pair,action,price,quantity:50/price,value_usdt:50,timestamp:new Date().toISOString(),mode:'PAPER',status:'EXECUTED'});
+    }
+  });
+  demoSigs=demoSigs.slice(0,200);demoTrades_=demoTrades_.slice(-100);
+  const wr=demoTrades>0?Math.round(demoWins/demoTrades*100):0;
+  updStats({total_trades:demoTrades,win_rate:wr,winning_trades:demoWins,losing_trades:demoTrades-demoWins,total_pnl:(demoWins*2.2)-((demoTrades-demoWins)*1.4),scans:demoScans*5,arb_opportunities_found:Math.floor(demoScans*.3)});
+  renderSigs(demoSigs.slice(0,30));renderTrades(demoTrades_.slice(-20));renderAI(demoSigs.slice(0,8));
+}
+
+function updateDemoMkt(){
+  let data={};
+  PAIRS.forEach(pair=>{
+    const p=PX[pair],ch=(Math.random()-.47)*4;
+    data[pair]={lastPrice:String(p*(1+ch/100)),highPrice:String(p*1.03),lowPrice:String(p*.97),percentageChange:String(ch),baseVolume:String(Math.random()*1000)};
+  });
+  renderMkt(data);
+  let h='';
+  PAIRS.forEach(pair=>{
+    const p=PX[pair],ch=(Math.random()-.47)*4,c=ch>=0?'var(--accent)':'var(--danger)';
+    h+=`<div class="ticker-item"><span style="font-weight:700">${pair}</span><span>$${fp(p)}</span><span style="color:${c}">${ch>=0?'▲':'▼'}${Math.abs(ch).toFixed(2)}%</span></div>`;
+  });
+  el('tickerContent').innerHTML=h;
+}
+
+function showDemoPoly(){
+  const misp=[
+    {question:"Will Bitcoin close above $75,000 on December 31, 2025?",market_price:.42,ai_probability:.61,edge:.19,direction:"BUY_YES",confidence:78,reasoning:"BTC halving cycle historically drives above ATH. ETF inflows support upside.",key_factors:["Halving cycle","ETF inflows","Macro tailwinds"],risk_level:"MEDIUM",volume:450000},
+    {question:"Will the Fed cut rates at least 3 times before January 2026?",market_price:.55,ai_probability:.38,edge:.17,direction:"BUY_NO",confidence:72,reasoning:"Sticky inflation and strong employment keep Fed cautious. Market overprices cuts.",key_factors:["CPI data","Labor market","Fed hawkishness"],risk_level:"MEDIUM",volume:820000},
+    {question:"Will Ethereum hit $5,000 before June 2026?",market_price:.33,ai_probability:.48,edge:.15,direction:"BUY_YES",confidence:65,reasoning:"ETH ETF approval and staking yield underpriced by market. Institutional demand rising.",key_factors:["ETH ETF","Staking yield","DeFi TVL"],risk_level:"HIGH",volume:290000},
+  ];
+  const arbs=[
+    {description:"BTC/ETH Price Correlation",market_a:"Will Bitcoin exceed $80,000 by Q1 2026?",market_b:"Will Ethereum exceed $4,500 by Q1 2026?",price_a:.58,price_b:.31,current_spread:.27,arb_edge:.18,action:"BUY_B_SELL_A",confidence:74,reasoning:"BTC/ETH historical correlation 0.85. Current 27% spread is abnormally wide — ETH underpriced vs BTC outlook.",convergence:"days"},
+    {description:"US Election Sweep Correlation",market_a:"Will Trump win the 2024 presidential election?",market_b:"Will Republicans win Senate majority?",price_a:.72,price_b:.48,current_spread:.24,arb_edge:.14,action:"BUY_B_SELL_A",confidence:68,reasoning:"Presidential win and Senate majority historically correlated at 0.80. 24% spread signals inconsistent pricing.",convergence:"hours"},
+  ];
+  renderMisp(misp);renderArbs(arbs);
+  el('polyStats').textContent=`Mispricing: ${misp.length} | Arb pairs: ${arbs.length} (DEMO)`;
+}
+
+// ── UTILS ─────────────────────────────────────────────────
+function el(id){return document.getElementById(id);}
+function fp(p){
+  if(!p)return '0';
+  if(p>=1000)return p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  if(p>=1)return p.toFixed(4);
+  return p.toFixed(6);
+}
+
+// ── INIT ──────────────────────────────────────────────────
+async function init(){
+  await chkAuth();
+  try{
+    const r=await fetch('/api/status',{signal:AbortSignal.timeout(2500)});
+    if(r.ok){
+      const d=await r.json();
+      if(d.running){setRun(true);document.getElementById('setupPanel').style.display='none';refreshIv=setInterval(fetchSt,3000);marketIv=setInterval(fetchMkt,10000);}
+      fetchMkt();
+    }
+  }catch(e){el('mktBox').innerHTML='<div class="empty-state">Click START BOT to begin</div>';}
+  setInterval(fetchPoly,15000);fetchPoly();
+  setInterval(chkAuth,5*60*1000);
+}
+
+init();
+</script>
+</body>
+</html>
