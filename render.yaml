@@ -11,6 +11,10 @@ services:
         sync: false
       - key: GROQ_API_KEY
         sync: false
+      - key: DASHBOARD_PASSWORD
+        sync: false
+      - key: FLASK_SECRET_KEY
+        sync: false
       - key: COINSWITCH_EXCHANGE
         value: c2c2
       - key: MAX_TRADE_USDT

@@ -14,55 +14,47 @@ Create a new GitHub repo and push all these files.
    - **Start Command**: `gunicorn server:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120`
 
 ### Step 3 — Add Environment Variables
-In Render → Your Service → Environment, add these:
+In Render → Your Service → **Environment** tab:
 
-| Variable | Value | Required |
-|----------|-------|----------|
-| `COINSWITCH_API_KEY` | Your CoinSwitch API key | ✅ Yes |
-| `COINSWITCH_SECRET_KEY` | Your CoinSwitch secret key | ✅ Yes |
-| `GROQ_API_KEY` | Your Groq API key | ✅ Yes |
-| `LIVE_TRADING` | `false` (paper) or `true` (real money) | Optional |
-| `MAX_TRADE_USDT` | `50` | Optional |
-| `SCAN_INTERVAL` | `10` | Optional |
-| `COINSWITCH_EXCHANGE` | `c2c2` | Optional |
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `COINSWITCH_API_KEY` | Your CoinSwitch API key | ✅ |
+| `COINSWITCH_SECRET_KEY` | Your CoinSwitch secret key | ✅ |
+| `GROQ_API_KEY` | Your Groq API key | ✅ |
+| `DASHBOARD_PASSWORD` | Password to access the dashboard | ✅ |
+| `FLASK_SECRET_KEY` | Any random string for session security | ✅ |
+| `LIVE_TRADING` | `false` = paper trading, `true` = real money | Optional |
+| `MAX_TRADE_USDT` | Max USDT per trade (default: 50) | Optional |
+| `SCAN_INTERVAL` | Seconds between scans (default: 10) | Optional |
+| `COINSWITCH_EXCHANGE` | Exchange to use (default: c2c2) | Optional |
 
 ### Step 4 — Deploy
-Click **Deploy** — Render will install dependencies and start the server.
+Click **Deploy**.
 
 ### Step 5 — Access Dashboard
-Your dashboard will be live at:
-`https://your-service-name.onrender.com`
+Visit `https://your-service-name.onrender.com`
+Enter your `DASHBOARD_PASSWORD` to log in.
 
 ---
 
 ## 🔑 Getting API Keys
 
-**Groq API Key (Free)**
-- https://console.groq.com → API Keys → Create
-
-**CoinSwitch API Key**
-- https://coinswitch.co/pro/profile?section=api-trading
-- Generate API Key + Secret Key
-
----
-
-## ⚠️ Important
-- `LIVE_TRADING=false` by default — uses paper trading (safe, no real money)
-- Set `LIVE_TRADING=true` only when you're ready to trade real money
-- Render free tier may sleep after inactivity — upgrade to paid for 24/7 uptime
+**Groq (Free):** https://console.groq.com → API Keys  
+**CoinSwitch:** https://coinswitch.co/pro/profile?section=api-trading
 
 ---
 
 ## 📁 File Structure
 ```
 nexus_trader/
-├── server.py            # Flask server (entry point)
+├── server.py            # Flask server + auth
 ├── bot.py               # Trading engine
 ├── polymarket_engine.py # Mispricing + Arb scanner
 ├── static/
-│   └── index.html       # Dashboard UI
+│   ├── index.html       # Dashboard (protected)
+│   └── login.html       # Login page
 ├── requirements.txt
-├── Procfile             # Render process file
-├── render.yaml          # Render config
+├── Procfile
+├── render.yaml
 └── README.md
 ```
