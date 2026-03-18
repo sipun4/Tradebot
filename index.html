@@ -364,7 +364,7 @@ function renderSigs(sigs){
   });
   sigs.slice(0,30).forEach(s=>{
     const ac=s.action==='BUY'?'action-buy':s.action==='SELL'?'action-sell':s.action==='ARB'?'action-arb':'action-hold';
-    const rc=s.rsi<35?'color:var(--accent)':s.rsi>65?'color:var(--danger)':'color:var(--muted)';
+    const rsiNum=parseFloat(s.rsi);const rc=rsiNum<35?'color:var(--accent)':rsiNum>65?'color:var(--danger)':'color:var(--muted)';
     const tags=(s.signals||[]).slice(0,3).map(t=>{
       const c=t.includes('ARB')?'arb-tag':t.includes('POLY')?'poly-tag':'';
       return `<span class="sig-tag ${c}">${t.replace(/^(RSI_|BB_|TREND_|AI_|MOMENTUM_)/,'').substring(0,14)}</span>`;
@@ -390,7 +390,7 @@ function renderTrades(trades){
       <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted)">${t.id||'—'}</div>
       <div style="font-family:'Space Mono',monospace;font-size:11px;font-weight:700">${t.symbol}</div>
       <div style="color:${ac};font-family:'Space Mono',monospace;font-size:11px;font-weight:700">${t.action}</div>
-      <div style="font-family:'Space Mono',monospace;font-size:10px">$${fp(t.price)}</div>
+      <div style="font-family:'Space Mono',monospace;font-size:10px">₹${fp(t.price)}</div>
       <div style="font-family:'Space Mono',monospace;font-size:10px">${t.value_inr ? '₹'+t.value_inr.toFixed(0) : '$'+(t.value_usdt||0).toFixed(2)}</div>
       <div><span class="t-status ${sc}">${t.mode==='PAPER'?'PAPER':t.status}</span></div>
     </div>`;
@@ -401,7 +401,11 @@ function renderTrades(trades){
 function renderMkt(data){
   let h='';
   PAIRS.forEach(pair=>{
-    const key=Object.keys(data).find(k=>k.toUpperCase().replace('/','').includes(pair.replace('/','').toUpperCase()));
+    const pairNorm=pair.replace('/','').toUpperCase();
+    const key=Object.keys(data).find(k=>{
+      const kn=k.toUpperCase().replace('/','').replace('_','');
+      return kn===pairNorm||kn.includes(pairNorm)||pairNorm.includes(kn);
+    });
     if(!key)return;
     const d=data[key];
     const price=parseFloat(d.lastPrice||0),ch=parseFloat(d.percentageChange||0);
@@ -412,10 +416,10 @@ function renderMkt(data){
       <div style="font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:${cc}">${pair.split('/')[0]}</div>
       <div>
         <div class="mini-bar"><div class="mini-bar-fill" style="width:${Math.min(pos,100)}%"></div></div>
-        <div style="font-size:9px;color:var(--muted);margin-top:3px;font-family:'Space Mono',monospace">$${fp(lo)} — $${fp(hi)}</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:3px;font-family:'Space Mono',monospace">₹${fp(lo)} — ₹${fp(hi)}</div>
       </div>
       <div>
-        <div style="font-family:'Space Mono',monospace;font-size:13px;font-weight:700">$${fp(price)}</div>
+        <div style="font-family:'Space Mono',monospace;font-size:13px;font-weight:700">₹${fp(price)}</div>
         <div style="font-size:10px;color:${cc};font-family:'Space Mono',monospace">${ch>=0?'+':''}${ch.toFixed(2)}%</div>
       </div>
       <div style="font-size:9px;color:var(--muted);font-family:'Space Mono',monospace;text-align:right">${parseFloat(d.baseVolume||0).toFixed(1)}<br><span style="font-size:8px">VOL</span></div>
@@ -428,7 +432,7 @@ function updTicker(data){
   let h='';
   Object.entries(data).slice(0,10).forEach(([k,d])=>{
     const ch=parseFloat(d.percentageChange||0),c=ch>=0?'var(--accent)':'var(--danger)';
-    h+=`<div class="ticker-item"><span style="font-weight:700">${k}</span><span>$${fp(parseFloat(d.lastPrice||0))}</span><span style="color:${c}">${ch>=0?'▲':'▼'}${Math.abs(ch).toFixed(2)}%</span></div>`;
+    h+=`<div class="ticker-item"><span style="font-weight:700">${k}</span><span>₹${fp(parseFloat(d.lastPrice||0))}</span><span style="color:${c}">${ch>=0?'▲':'▼'}${Math.abs(ch).toFixed(2)}%</span></div>`;
   });
   el('tickerContent').innerHTML=h||'<div style="color:var(--muted)">No data</div>';
 }
@@ -545,7 +549,7 @@ function runDemoScan(){
       timestamp:new Date().toISOString()});
     if(action!=='HOLD'&&Math.random()>.65){
       demoTrades++;if(Math.random()>.38)demoWins++;
-      demoTrades_.push({id:`T${String(demoTrades).padStart(4,'0')}`,symbol:pair,action,price,quantity:50/price,value_usdt:50,timestamp:new Date().toISOString(),mode:'PAPER',status:'EXECUTED'});
+      demoTrades_.push({id:`T${String(demoTrades).padStart(4,'0')}`,symbol:pair,action,price,quantity:500/price,value_inr:500,timestamp:new Date().toISOString(),mode:'PAPER',status:'EXECUTED'});
     }
   });
   demoSigs=demoSigs.slice(0,200);demoTrades_=demoTrades_.slice(-100);
@@ -564,7 +568,7 @@ function updateDemoMkt(){
   let h='';
   PAIRS.forEach(pair=>{
     const p=PX[pair],ch=(Math.random()-.47)*4,c=ch>=0?'var(--accent)':'var(--danger)';
-    h+=`<div class="ticker-item"><span style="font-weight:700">${pair}</span><span>$${fp(p)}</span><span style="color:${c}">${ch>=0?'▲':'▼'}${Math.abs(ch).toFixed(2)}%</span></div>`;
+    h+=`<div class="ticker-item"><span style="font-weight:700">${pair}</span><span>₹${fp(p)}</span><span style="color:${c}">${ch>=0?'▲':'▼'}${Math.abs(ch).toFixed(2)}%</span></div>`;
   });
   el('tickerContent').innerHTML=h;
 }
@@ -599,7 +603,7 @@ async function init(){
     const r=await fetch('/api/status',{signal:AbortSignal.timeout(2500)});
     if(r.ok){
       const d=await r.json();
-      if(d.running){setRun(true);document.getElementById('setupPanel').style.display='none';refreshIv=setInterval(fetchSt,3000);marketIv=setInterval(fetchMkt,10000);}
+      if(d.running){setRun(true);document.getElementById('setupPanel').style.display='none';refreshIv=setInterval(fetchSt,3000);marketIv=setInterval(fetchMkt,10000);fetchSt();}
       fetchMkt();
     }
   }catch(e){el('mktBox').innerHTML='<div class="empty-state">Click START BOT to begin</div>';}
