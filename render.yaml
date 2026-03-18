@@ -16,9 +16,11 @@ services:
       - key: FLASK_SECRET_KEY
         sync: false
       - key: COINSWITCH_EXCHANGE
-        value: c2c2
-      - key: MAX_TRADE_USDT
-        value: "50"
+        value: coinswitchx
+      - key: MIN_TRADE_INR
+        value: "100"
+      - key: MAX_TRADE_INR
+        value: "4000"
       - key: SCAN_INTERVAL
         value: "10"
       - key: LIVE_TRADING

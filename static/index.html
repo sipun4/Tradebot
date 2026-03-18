@@ -113,6 +113,9 @@
     </div>
     <button class="btn btn-start" id="startBtn" onclick="startBot()">▶ START BOT</button>
     <button class="btn btn-stop" id="stopBtn" onclick="stopBot()" style="display:none">⏹ STOP</button>
+    <div style="font-size:9px;color:var(--muted);font-family:'Space Mono',monospace;text-align:right;line-height:1.6">
+      <div style="color:var(--accent2)" id="minTradeInfo">Min: ₹100 | ONE TRADE AT A TIME</div>
+    </div>
     <button class="btn btn-ghost" onclick="doLogout()">🔒 LOGOUT</button>
   </div>
 </header>
@@ -162,6 +165,11 @@ Polymarket: refresh 15s</div>
     <div class="stat-card"><div class="stat-label">Total P&L</div><div class="stat-value" id="sPL">$0.00</div><div class="stat-sub">USDT profit</div></div>
     <div class="stat-card"><div class="stat-label">Scans</div><div class="stat-value blue" id="sSC">0</div><div class="stat-sub">Since start</div></div>
     <div class="stat-card"><div class="stat-label">Arb Alerts</div><div class="stat-value" id="sAR">0</div><div class="stat-sub">Opportunities</div></div>
+    <div class="stat-card" id="tradeSlotCard" style="border-color:rgba(0,245,160,.2)">
+      <div class="stat-label">Trade Slot</div>
+      <div class="stat-value green" id="sSlot" style="font-size:16px">FREE</div>
+      <div class="stat-sub" id="sSlotDetail">Ready for next trade</div>
+    </div>
   </div>
 
   <div class="panels-grid">
@@ -210,7 +218,7 @@ Polymarket: refresh 15s</div>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:48px 100px 58px 82px 88px 68px;padding:7px 18px;font-size:9px;color:var(--muted);letter-spacing:1px;border-bottom:1px solid var(--border);gap:8px">
-      <span>ID</span><span>SYMBOL</span><span>SIDE</span><span>PRICE</span><span>VALUE</span><span>STATUS</span>
+      <span>ID</span><span>SYMBOL</span><span>SIDE</span><span>PRICE</span><span>VALUE(₹)</span><span>STATUS</span>
     </div>
     <div class="panel-body" id="trBox" style="max-height:210px"><div class="empty-state">No trades yet</div></div>
   </div>
@@ -324,6 +332,29 @@ function updStats(s){
   el('sAR').textContent=s.arb_opportunities_found||0;
 }
 
+function updTradeSlot(d) {
+  const slot = d.trade_slot || 'FREE';
+  const ct   = d.current_trade || {};
+  const slotEl   = el('sSlot');
+  const detailEl = el('sSlotDetail');
+  const cardEl   = el('tradeSlotCard');
+  if (slot === 'FREE') {
+    slotEl.textContent   = 'FREE';
+    slotEl.className     = 'stat-value green';
+    detailEl.textContent = 'Ready for next trade';
+    cardEl.style.borderColor = 'rgba(0,245,160,.2)';
+  } else {
+    slotEl.textContent   = 'BUSY';
+    slotEl.className     = 'stat-value' + (ct.status==='OPEN'?' blue':' red');
+    detailEl.textContent = ct.symbol ? `${ct.symbol} ${ct.action} — ${ct.status}` : 'Trade in progress...';
+    cardEl.style.borderColor = 'rgba(0,212,255,.3)';
+  }
+  // Show min trade info
+  if (d.stats && d.stats.min_trade_inr) {
+    el('minTradeInfo').textContent = `Min: ₹${d.stats.min_trade_inr} | Max: $${d.stats.max_trade_usdt}`;
+  }
+}
+
 function renderSigs(sigs){
   el('sigCount').textContent=sigs.length+' signals';
   if(!sigs.length){el('sigBox').innerHTML='<div class="empty-state">Scanning markets...</div>';return;}
@@ -360,7 +391,7 @@ function renderTrades(trades){
       <div style="font-family:'Space Mono',monospace;font-size:11px;font-weight:700">${t.symbol}</div>
       <div style="color:${ac};font-family:'Space Mono',monospace;font-size:11px;font-weight:700">${t.action}</div>
       <div style="font-family:'Space Mono',monospace;font-size:10px">$${fp(t.price)}</div>
-      <div style="font-family:'Space Mono',monospace;font-size:10px">$${(t.value_usdt||0).toFixed(2)}</div>
+      <div style="font-family:'Space Mono',monospace;font-size:10px">${t.value_inr ? '₹'+t.value_inr.toFixed(0) : '$'+(t.value_usdt||0).toFixed(2)}</div>
       <div><span class="t-status ${sc}">${t.mode==='PAPER'?'PAPER':t.status}</span></div>
     </div>`;
   });
